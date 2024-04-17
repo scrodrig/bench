@@ -18,7 +18,7 @@ import tot
 
 log = logging.getLogger(__name__)
 
-METRICS = "recall_10,recall_100,recall_1000,ndcg_cut_10,ndcg_cut_100,ndcg_cut_1000,recip_rank"
+METRICS = "recall_1,recall_10,recall_100,recall_1000,ndcg,ndcg_cut_10,ndcg_cut_100,ndcg_cut_1000,recip_rank"
 
 
 def create_index(dataset, field_to_index, dest_folder, index):
@@ -141,6 +141,8 @@ if __name__ == '__main__':
         eval_res = evaluator.evaluate(run)
 
         eval_res_agg = utils.aggregate_pytrec(eval_res, "mean")
+
+        # pytrec_eval.plotRecallPrecision(run, qrel, perQuery=True, outputFile='./recall-precision.pdf', showPlot=False)
 
         for metric, (mean, std) in eval_res_agg.items():
             log.info(f"{metric:<12}: {mean:.4f} ({std:0.4f})")
