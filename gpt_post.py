@@ -162,6 +162,15 @@ if __name__ == '__main__':
     # /Users/sam/workspaces/tot-uncert/wikidata_cache
     parser.add_argument("--wikidata_cache", required=False, type=str)
     logging.basicConfig(level=logging.INFO)
+    #####
+    # python gpt_post.py \
+    # --input llm_example_runs/ex_out.jsonl \
+    # --ref_run gpt4/train.run \
+    # --split train \
+    # --run_format trec_eval \
+    # --data_path $DATA_PATH \
+    # --index_name llm_title \
+    # --run llm_example_runs/ex_out.run --run_id llm_example --gather_wikidata_aliases --wikidata_cache ./wikidata_cache/
 
     args = parser.parse_args()
     if args.gather_wikidata_aliases:
