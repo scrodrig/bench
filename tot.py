@@ -48,24 +48,24 @@ class TrecToTDocs(BaseDocs):
     def docs_cls(self):
         return TrecToTDoc
 
-    def docs_store(self, field='doc_id'):
+    def docs_store(self, field="doc_id"):
         return PickleLz4FullStore(
-            path=f'{ir_datasets.util.home_path() / NAME}/docs.pklz4',
+            path=f"{ir_datasets.util.home_path() / NAME}/docs.pklz4",
             init_iter_fn=self._docs_iter,
             data_cls=self.docs_cls(),
             lookup_field=field,
             index_fields=[field],
-            count_hint=231852
+            count_hint=231852,
         )
 
     def docs_count(self):
         return self.docs_store().count()
 
     def docs_namespace(self):
-        return f'{NAME}/{self._name}'
+        return f"{NAME}/{self._name}"
 
     def docs_lang(self):
-        return 'en'
+        return "en"
 
 
 class LocalFileStream:
@@ -87,26 +87,28 @@ class TrecToTQueries(BaseQueries):
             for line in stream:
                 data = json.loads(line)
 
-                yield TrecToTQuery(query_id=data["id"],
-                                   text=data["text"],
-                                   title=data["title"],
-                                   domain=data["domain"],
-                                   sentence_annotations=data["sentence_annotations"])
+                yield TrecToTQuery(
+                    query_id=data["id"],
+                    text=data["text"],
+                    title=data["title"],
+                    domain=data["domain"],
+                    sentence_annotations=data["sentence_annotations"],
+                )
 
     def queries_cls(self):
         return TrecToTQuery
 
     def queries_namespace(self):
-        return f'{NAME}/{self._name}'
+        return f"{NAME}/{self._name}"
 
     def queries_lang(self):
-        return 'en'
+        return "en"
 
 
 def register(path):
     qrel_defs = {
-        1: 'answer',
-        0: 'not answer',
+        1: "answer",
+        0: "not answer",
     }
 
     path = Path(path)
@@ -135,15 +137,13 @@ def register(path):
 
             components.append(TrecQrels(LocalFileStream(qrel), qrel_defs))
 
-        ds = ir_datasets.Dataset(
-            *components
-        )
+        ds = ir_datasets.Dataset(*components)
 
         ir_datasets.registry.register(NAME + ":" + name, ds)
         log.info(f"registered: {NAME}:{name}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     path = input("Enter data path:")
 
