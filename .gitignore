@@ -9,6 +9,7 @@ bm25_negatives
 dense_models
 generate_job_file.py
 testmodel
+data
 
 
 # Byte-compiled / optimized / DLL files
