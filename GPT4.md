@@ -57,7 +57,7 @@ python gpt_post.py \
 python gpt_post.py \
     --input llm_example_runs/ex_out.jsonl \
     --split train \
-    --data_path ../trec-tot/datasets/TREC-TOT/public/ \
+    --data_path $DATA_PATH \
     --index_name llm_title \
     --run llm_example_runs/ex_out.run \  
     --run_id llm_example \ 
