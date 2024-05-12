@@ -11,52 +11,52 @@ import logging
 import tot
 import bm25
 
-log = logging.getLogger(__name__)
+loggers = logging.getLogger(__name__)
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser("train_dense", description="Trains a dense retrieval model")
+    indexer_parser = argparse.ArgumentParser("train_dense", description="Trains a dense retrieval model")
 
-    parser.add_argument("--data_path", default="./datasets/TREC-TOT", help="location to dataset")
+    indexer_parser.add_argument("--data_path", default="./datasets/TREC-TOT", help="location to dataset")
 
-    parser.add_argument("--negatives_path", default="./bm25_negatives",
+    indexer_parser.add_argument("--negatives_path", default="./bm25_negatives",
                         help="path to folder containing negatives ")
 
-    parser.add_argument("--query", choices=["title", "text", "title_text"], default="title_text")
+    indexer_parser.add_argument("--query", choices=["title", "text", "title_text"], default="title_text")
 
-    parser.add_argument("--model_or_checkpoint", type=str, required=True, help="hf checkpoint/ path to pt-model")
-    parser.add_argument("--embed_size", required=True, type=int, help="hidden size of the model")
+    indexer_parser.add_argument("--model_or_checkpoint", type=str, required=True, help="hf checkpoint/ path to pt-model")
+    indexer_parser.add_argument("--embed_size", required=True, type=int, help="hidden size of the model")
 
-    parser.add_argument("--epochs", type=int, required=True, help="number of epochs to train")
-    parser.add_argument("--lr", type=float, default=2e-5, help="learning rate")
-    parser.add_argument("--weight_decay", type=float, default=0.01, help="weight decay")
-    parser.add_argument("--warmup_steps", type=int, default=0, help="warmup steps")
-    parser.add_argument("--batch_size", type=int, default=24, help="batch size (training)")
-    parser.add_argument("--encode_batch_size", type=int, default=124, help="batch size (inference)")
-    parser.add_argument("--evaluation_steps", type=int, default=-1, help="steps before evaluation is run")
+    indexer_parser.add_argument("--epochs", type=int, required=True, help="number of epochs to train")
+    indexer_parser.add_argument("--lr", type=float, default=2e-5, help="learning rate")
+    indexer_parser.add_argument("--weight_decay", type=float, default=0.01, help="weight decay")
+    indexer_parser.add_argument("--warmup_steps", type=int, default=0, help="warmup steps")
+    indexer_parser.add_argument("--batch_size", type=int, default=24, help="batch size (training)")
+    indexer_parser.add_argument("--encode_batch_size", type=int, default=124, help="batch size (inference)")
+    indexer_parser.add_argument("--evaluation_steps", type=int, default=-1, help="steps before evaluation is run")
 
-    parser.add_argument("--freeze_base_model", action="store_true", default=False,
+    indexer_parser.add_argument("--freeze_base_model", action="store_true", default=False,
                         help="if set, freezes the base layer and trains only a projection layer on top")
-    parser.add_argument("--metrics", required=False, default=bm25.METRICS, help="csv - metrics to evaluate")
-    parser.add_argument("--n_hits", default=1000, type=int, help="number of hits to retrieve")
+    indexer_parser.add_argument("--metrics", required=False, default=bm25.METRICS, help="csv - metrics to evaluate")
+    indexer_parser.add_argument("--n_hits", default=1000, type=int, help="number of hits to retrieve")
 
-    parser.add_argument("--device", type=str, default="cuda", help="device to train /evaluate model on")
+    indexer_parser.add_argument("--device", type=str, default="cuda", help="device to train /evaluate model on")
 
-    parser.add_argument("--model_dir", type=str, help="folder to store model & runs", required=True)
-    parser.add_argument("--run_id", required=True, help="run id (required if run_format = trec_eval)")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--negatives_out", default=None,
+    indexer_parser.add_argument("--model_dir", type=str, help="folder to store model & runs", required=True)
+    indexer_parser.add_argument("--run_id", required=True, help="run id (required if run_format = trec_eval)")
+    indexer_parser.add_argument("--seed", type=int, default=42)
+    indexer_parser.add_argument("--negatives_out", default=None,
                         help="if provided, dumps negatives for use in training other models")
-    parser.add_argument("--n_negatives", default=10, type=int, help="number of negatives to obtain")
+    indexer_parser.add_argument("--n_negatives", default=10, type=int, help="number of negatives to obtain")
 
     logging.basicConfig(level=logging.INFO)
 
-    args = parser.parse_args()
+    args = indexer_parser.parse_args()
     utils.set_seed(args.seed)
-    log.info(f"args: {args}")
+    loggers.info(f"args: {args}")
 
     tot.register(args.data_path)
-    metrics = args.metrics.split(",")
+    all_metrics = args.metrics.split(",")
 
     model_dir = args.model_dir
     os.makedirs(model_dir, exist_ok=True)
@@ -78,13 +78,13 @@ if __name__ == '__main__':
     for split in {"train", "dev"}:
         irds_splits[split] = ir_datasets.load(f"trec-tot:{split}")
 
-        log.info(f"loaded split {split}")
+        loggers.info(f"loaded split {split}")
         st_data[split] = data.SBERTDataset(irds_splits[split], query_type=args.query,
                                            negatives=utils.read_json(
                                                os.path.join(args.negatives_path,
                                                             f"{split}-{args.query}-negatives.json")))
 
-    log.info(f"training model for {args.epochs} epochs")
+    loggers.info(f"training model for {args.epochs} epochs")
     train_dataloader = DataLoader(st_data["train"], shuffle=True, batch_size=args.batch_size)
 
     args.loss_fn = "mnrl"
@@ -113,7 +113,7 @@ if __name__ == '__main__':
               weight_decay=args.weight_decay,
               save_best_model=True)
 
-    log.info("encoding corpus with model")
+    loggers.info("encoding corpus with model")
     embed_size = args.embed_size
     index, (idx_to_docid, docid_to_idx) = encode.encode_dataset_faiss(model, embedding_size=embed_size,
                                                                       dataset=irds_splits["train"],
@@ -125,17 +125,17 @@ if __name__ == '__main__':
     eval_res = {}
 
     try:
-        log.info("attempting to load test set")
+        loggers.info("attempting to load test set")
         # plug in the test set
         irds_splits["test"] = ir_datasets.load(f"trec-tot:test")
-        log.info("success!")
+        loggers.info("success!")
     except KeyError:
-        log.info("couldn't find test set!")
+        loggers.info("couldn't find test set!")
         pass
 
     split_qrels = {}
     for split, dataset in irds_splits.items():
-        log.info(f"running & evaluating {split}")
+        loggers.info(f"running & evaluating {split}")
 
         run = encode.create_run_faiss(model=model,
                                       dataset=dataset,
@@ -150,13 +150,13 @@ if __name__ == '__main__':
             qrel, n_missing = utils.get_qrel(dataset, run)
             split_qrels[split] = qrel
             evaluator = pytrec_eval.RelevanceEvaluator(
-                qrel, metrics)
+                qrel, all_metrics)
 
             eval_res[split] = evaluator.evaluate(run)
             eval_res_agg[split] = utils.aggregate_pytrec(eval_res[split], "mean")
 
             for metric, (mean, std) in eval_res_agg[split].items():
-                log.info(f"{metric:<12}: {mean:.4f} ({std:0.4f})")
+                loggers.info(f"{metric:<12}: {mean:.4f} ({std:0.4f})")
 
     utils.write_json({
         "aggregated_result": eval_res_agg,
@@ -176,7 +176,7 @@ if __name__ == '__main__':
                     writer.write(f"{qid}\tQ0\t{doc_id}\t{rank}\t{score}\t{run_id}\n")
 
     if args.negatives_out:
-        log.info(f"writing negatives to folder: {args.negatives_out}")
+        loggers.info(f"writing negatives to folder: {args.negatives_out}")
         os.makedirs(args.negatives_out, exist_ok=True)
         out = {}
 
