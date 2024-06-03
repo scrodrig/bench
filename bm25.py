@@ -16,13 +16,13 @@ from pyserini.search.lucene import LuceneSearcher
 from src import utils
 import tot
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 METRICS = "recall_1,recall_10,recall_100,recall_1000,ndcg,ndcg_cut_10,ndcg_cut_100,ndcg_cut_1000,recip_rank"
 
 
 def create_index(dataset, field_to_index, dest_folder, index):
-    log.info(f"creating files for indexing in {dest_folder}")
+    logger.info(f"creating files for indexing in {dest_folder}")
     docs_folder = os.path.join(dest_folder, "docs")
     os.makedirs(docs_folder, exist_ok=True)
 
@@ -46,7 +46,7 @@ def create_index(dataset, field_to_index, dest_folder, index):
     try:
         subprocess.call(cmd)
     except subprocess.CalledProcessError as e:
-        log.exception("Exception occurred during indexing!")
+        logger.exception("Exception occurred during indexing!")
         raise ValueError(e)
 
 
@@ -105,26 +105,26 @@ if __name__ == '__main__':
 
     metrics = args.metrics.split(",")
 
-    log.info(f"metrics: {metrics}")
+    logger.info(f"metrics: {metrics}")
 
     docs_path = os.path.join(args.docs_path, args.index_name)
     index = os.path.join(args.index_path, args.index_name)
     if os.path.exists(index):
-        log.warning(f"Index {index} already exists!")
+        logger.warning(f"Index {index} already exists!")
     else:
-        log.info("Creating index!")
+        logger.info("Creating index!")
         create_index(dataset=dataset,
                      field_to_index=args.field,
                      dest_folder=docs_path,
                      index=index)
 
-    log.info(f"BM25 config: k1={args.param_k1}; b={args.param_b}")
+    logger.info(f"BM25 config: k1={args.param_k1}; b={args.param_b}")
 
     queries, n_empty = utils.create_queries(dataset, query_type=args.query)
 
-    log.info(f"Gathered {len(queries)} queries")
+    logger.info(f"Gathered {len(queries)} queries")
     if n_empty > 0:
-        log.warning(f"Number of empty queries: {n_empty}")
+        logger.warning(f"Number of empty queries: {n_empty}")
 
     run = create_run(index=index, queries=queries, param_b=args.param_b,
                      param_k1=args.param_k1, batch_size=args.batch_size,
@@ -145,10 +145,10 @@ if __name__ == '__main__':
         # pytrec_eval.plotRecallPrecision(run, qrel, perQuery=True, outputFile='./recall-precision.pdf', showPlot=False)
 
         for metric, (mean, std) in eval_res_agg.items():
-            log.info(f"{metric:<12}: {mean:.4f} ({std:0.4f})")
+            logger.info(f"{metric:<12}: {mean:.4f} ({std:0.4f})")
 
     else:
-        log.info("dataset does not have qrels. evaluation not performed!")
+        logger.info("dataset does not have qrels. evaluation not performed!")
         eval_res_agg = None
         eval_res = None
         qrel = None
@@ -157,7 +157,7 @@ if __name__ == '__main__':
         run_format = args.run_format
         if run_format is None:
             run_format = "json" if "json" in args.run else "trec_eval"
-        log.info(f"Saving run to {args.run} (format={run_format})")
+        logger.info(f"Saving run to {args.run} (format={run_format})")
         if run_format == "json":
             utils.write_json({
                 "aggregated_result": eval_res_agg,
